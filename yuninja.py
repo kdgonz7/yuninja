@@ -16,8 +16,10 @@ jobs = 0
 quiet = False
 srcdir = "src"
 buildmode = False
+super_verbose = False
 
 n = 0
+
 
 def print_usage():
 	print("""Usage: build.py [-jobs <N>] [-quiet] [-help]
@@ -27,6 +29,7 @@ def print_usage():
 	-jobs <N>		- number of threads to use (more jobs, more parallel)
 	-quiet			- don't print anything to STDOUT
 	-srcdir	<D>		- what directory should be used for source files? defaults to `src'
+	-verbose		- print more information about build process
 	-help			- this help
 	
 Commands:
@@ -59,11 +62,15 @@ while n < len(sys.argv):
 
 	if sys.argv[n] == "build":
 		buildmode = True
+
+	if sys.argv[n] == "-verbose":
+		super_verbose = True
 	n += 1
 
 if not buildmode: print_usage(); exit(0)
 
 msg = lambda x: print(colorama.Fore.MAGENTA + colorama.Style.DIM + "[yuninja]" + colorama.Style.RESET_ALL + " " + x) and sys.stdout.flush()
+msgL = lambda x: print(colorama.Fore.YELLOW + colorama.Style.DIM + "[yuninja DEBUG]" + colorama.Style.RESET_ALL + " " + x)
 if quiet:
 	msg = lambda x: sys.stdout.flush()
 
@@ -72,6 +79,7 @@ msg("checking for yue files in the source directory with " + str(jobs) + " worke
 now = time()
 
 tocompile = []
+original_jobs = jobs
 
 for dirpath, dirnames, filenames in os.walk(srcdir):
 	if not Path(dirpath[4:]).is_dir():
@@ -80,8 +88,6 @@ for dirpath, dirnames, filenames in os.walk(srcdir):
 		os.mkdir(dirpath[4:])
 	for f in filenames:
 		if f.endswith(".yue"):
-			if not quiet:
-				msg(f"compiling {f}...")
 
 			tocompile.append(os.path.join(dirpath, f))
 
@@ -91,6 +97,9 @@ def subcomp(f, dirpath):
 
 		This function is thread-safe.
 	"""
+	if not quiet:
+		msg(f"compiling {f}...")
+
 	rc = subprocess.run(["yue", f"{f}", "-o", f"{f[4:-4]}.lua"], stderr=subprocess.DEVNULL)
 
 	if rc.returncode != 0:
@@ -122,26 +131,51 @@ if len(tocompile) == 0:
 	msg("nothing to do")
 	exit(0)
 
-if jobs > 0:
+if jobs > 1:
 	i = 0
+	if super_verbose:
+		msgL("thread process initiated")
+
 	while i < len(tocompile):
+		if super_verbose:
+			msgL(f"{i} threads, {len(tocompile) - i} files left to compile")
+
 		if jobs > 0:
-			for j in range(jobs):
+			if super_verbose:
+				msgL("found jobs available to use")
+
+			for j in range(jobs): # each job will take a file
+				if super_verbose:
+					msgL("taking over job " + str(j))
+
 				if i >= len(tocompile):
 					break
 
 				t = Thread(target=subcomp, args=(tocompile[i], dirpath))
 				t.start()
 
+				if super_verbose:
+					msgL("job spawned, name: " + str(t.name))
+
 				threads.append(t)
 				i += 1
 
+				jobs -= 1
 			for t in threads:
 				t.join()
+
+			
 else:
+	if jobs == 1:
+		msg("one job, ignoring -jobs flag")
+		if super_verbose:
+			msgL("one job is the same as no jobs, as program default single threaded")
 	for f in tocompile:
 		subcomp(f, dirpath)
 
+# get the time it took to complete building
 time_taken = time() - now
 
 msg(f"build finished ({time_taken:.4f}s)")
+msg(f"threads used: {(original_jobs - jobs) if jobs > 1 else 1}/{original_jobs}")
+msg(f"total files: {len(tocompile)}")
