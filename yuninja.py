@@ -17,6 +17,9 @@ n = 0
 while n < len(sys.argv):
 	if sys.argv[n] == "-jobs" or sys.argv[n] == "-j":
 		n += 1									# -jobs <N>
+		if n >= len(sys.argv):
+			print("error: -jobs requires an argument <N>")
+			exit(1)
 		jobs = int(sys.argv[n])	#				<N>
 		n += 1									#				 N <...>
 		continue
@@ -34,6 +37,9 @@ while n < len(sys.argv):
 
 	if sys.argv[n] == "-srcdir":
 		n += 1
+		if n >= len(sys.argv):
+			print("error: -srcdir requires an argument <DIR>")
+			exit(1)
 		srcdir = sys.argv[n]
 		n += 1
 		continue
