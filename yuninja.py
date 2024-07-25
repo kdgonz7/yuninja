@@ -86,6 +86,11 @@ for dirpath, dirnames, filenames in os.walk(srcdir):
 			tocompile.append(os.path.join(dirpath, f))
 
 def subcomp(f, dirpath):
+	"""
+		Compiles a single yuescript file and outputs it to a relative path.
+
+		This function is thread-safe.
+	"""
 	rc = subprocess.run(["yue", f"{f}", "-o", f"{f[4:-4]}.lua"], stderr=subprocess.DEVNULL)
 
 	if rc.returncode != 0:
