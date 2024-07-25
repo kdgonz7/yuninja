@@ -8,6 +8,7 @@ from pathlib import Path
 from time import time
 from threading import Thread
 from shutil import copyfile
+from os import makedirs
 
 # settings
 jobs = 0
@@ -71,10 +72,13 @@ for dirpath, dirnames, filenames in os.walk(srcdir):
 
 def subcomp(f, dirpath):
 	subprocess.run(["yue", f"{f}", "-o", f"{f[4:-4]}.lua"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+	filename = f[4:-4]
 	if Path(".cache").is_dir():
-		if Path(".cache/" + f[4:-4] + ".lua").is_file():
-			g = open(f".cache/{f[4:-4]}.lua", "r")
-			r = open(f"{f[4:-4]}.lua", "r")
+		makedirs(f".cache/{os.path.dirname(filename)}", exist_ok=True)
+		if Path(".cache/" + filename + ".lua").is_file():
+			g = open(f".cache/{filename}.lua", "r")
+			r = open(f"{filename}.lua", "r")
 
 			if g.read() == r.read():
 				msg(f"{f} is up to date")
@@ -85,7 +89,7 @@ def subcomp(f, dirpath):
 	if not Path(".cache").is_dir():
 		os.mkdir(".cache")
 
-	cache_filename = f".cache/{f[4:-4]}.lua"
+	cache_filename = f".cache/{filename}.lua"
 	copyfile(f"{f[4:-4]}.lua", cache_filename)
 	
 threads = []
