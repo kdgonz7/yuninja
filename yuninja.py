@@ -3,9 +3,11 @@ import os
 import subprocess
 import sys
 
+from sys import exit
 from pathlib import Path
 from time import time
 from threading import Thread
+from shutil import copyfile
 
 # settings
 jobs = 0
@@ -69,8 +71,28 @@ for dirpath, dirnames, filenames in os.walk(srcdir):
 
 def subcomp(f, dirpath):
 	subprocess.run(["yue", f"{f}", "-o", f"{f[4:-4]}.lua"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+	if Path(".cache").is_dir():
+		if Path(".cache/" + f[4:-4] + ".lua").is_file():
+			g = open(f".cache/{f[4:-4]}.lua", "r")
+			r = open(f"{f[4:-4]}.lua", "r")
 
+			if g.read() == r.read():
+				msg(f"{f} is up to date")
+
+			g.close()
+			r.close()
+
+	if not Path(".cache").is_dir():
+		os.mkdir(".cache")
+
+	cache_filename = f".cache/{f[4:-4]}.lua"
+	copyfile(f"{f[4:-4]}.lua", cache_filename)
+	
 threads = []
+
+if len(tocompile) == 0:
+	msg("nothing to do")
+	exit(0)
 
 if jobs > 0:
 	i = 0
