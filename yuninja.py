@@ -9,6 +9,7 @@ from time import time
 from threading import Thread
 from shutil import copyfile
 from os import makedirs
+from io import StringIO
 
 # settings
 jobs = 0
@@ -71,7 +72,11 @@ for dirpath, dirnames, filenames in os.walk(srcdir):
 			tocompile.append(os.path.join(dirpath, f))
 
 def subcomp(f, dirpath):
-	subprocess.run(["yue", f"{f}", "-o", f"{f[4:-4]}.lua"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+	rc = subprocess.run(["yue", f"{f}", "-o", f"{f[4:-4]}.lua"], stderr=subprocess.DEVNULL)
+
+	if rc.returncode != 0:
+		msg("error when compiling. see output above.")
+		exit(1)
 
 	filename = f[4:-4]
 	if Path(".cache").is_dir():
