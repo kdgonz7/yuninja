@@ -15,8 +15,23 @@ from io import StringIO
 jobs = 0
 quiet = False
 srcdir = "src"
+buildmode = False
 
 n = 0
+
+def print_usage():
+	print("""Usage: build.py [-jobs <N>] [-quiet] [-help]
+	This program builds all yuescript files in a `src' directory, and outputs them to the root directory. Primarily
+	Designed for Garry's Mod addons. But can be configured to run in any environment.
+
+	-jobs <N>		- number of threads to use (more jobs, more parallel)
+	-quiet			- don't print anything to STDOUT
+	-srcdir	<D>		- what directory should be used for source files? defaults to `src'
+	-help			- this help
+	
+Commands:
+	build			- build all yuescript files in the 
+	""")
 
 while n < len(sys.argv):
 	if sys.argv[n] == "-jobs" or sys.argv[n] == "-j":
@@ -28,13 +43,7 @@ while n < len(sys.argv):
 		n += 1									#				 N <...>
 		continue
 	if sys.argv[n] == "-help" or sys.argv[n] == "-h":
-		print("""Usage: build.py [-jobs <N>] [-quiet] [-help]
-	This program builds all yuescript files in a `src' directory, and outputs them to the root directory. Primarily
-	Designed for Garry's Mod addons. But can be configured to run in any environment.
-
-	-jobs <N>		- number of threads to use (more jobs, more parallel)
-	-quiet			- don't print anything to STDOUT
-	-help			- this help""")
+		print_usage()
 		exit(0)
 	if sys.argv[n] == "-quiet" or sys.argv[n] == "-q" or sys.argv[n] == "--":
 		quiet = True
@@ -47,7 +56,12 @@ while n < len(sys.argv):
 		srcdir = sys.argv[n]
 		n += 1
 		continue
+
+	if sys.argv[n] == "build":
+		buildmode = True
 	n += 1
+
+if not buildmode: print_usage(); exit(0)
 
 msg = lambda x: print(colorama.Fore.MAGENTA + colorama.Style.DIM + "[yuninja]" + colorama.Style.RESET_ALL + " " + x) and sys.stdout.flush()
 if quiet:
